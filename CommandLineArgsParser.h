@@ -34,7 +34,7 @@ private:
 
 class CommandLineArgsParser {
 public:
-    CommandLineArgsParser(const OptionsParser& optionsParser);
+    explicit CommandLineArgsParser(const OptionsParser& optionsParser);
     std::tuple<Options, std::vector<DirEntry>> parse(int argc, char** argv);
 
 private:
