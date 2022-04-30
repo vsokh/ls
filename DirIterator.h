@@ -22,14 +22,14 @@ namespace ls {
 class DirIterator
 {
 public:
-    explicit DirIterator(const std::string& dirname);
+    explicit DirIterator(std::string dirname);
     ~DirIterator();
 
     struct iter
     {
         iter() = default;
 
-        iter(DIR* dirp, const std::string& dirname);
+        iter(DIR* dirp, std::string dirname);
         bool operator!=(const iter& rhs) const noexcept;
         iter& operator++();
         DirEntry operator*() const noexcept;

@@ -5,12 +5,9 @@
 #include <vector>
 #include <variant>
 #include <optional>
+#include <string_view>
 
-// TODO: make a visitor class
-struct DirEntry {
-    DirEntry(std::string name) : _name{name} {}
-    std::string _name{};
-};
+class DirEntry;
 
 namespace ls {
 
@@ -19,14 +16,8 @@ using Options = std::vector<Option>;
 
 class OptionsParser {
 public:
-    OptionsParser(const Options& possibleOptions);
-    std::optional<Options> parse(const std::string& opt);
-
-private:
-    static bool startsWithDash(const std::string& opt);
-    std::string removeDash(const std::string& opt);
-    bool contains(const std::string& opt);
-    Options split(const std::string& opt);
+    explicit OptionsParser(Options  possibleOptions);
+    std::optional<Options> parse(std::string_view opt);
 
 private:
     Options _possibleOptions{};
@@ -34,7 +25,7 @@ private:
 
 class CommandLineArgsParser {
 public:
-    explicit CommandLineArgsParser(const OptionsParser& optionsParser);
+    explicit CommandLineArgsParser(OptionsParser optionsParser);
     std::tuple<Options, std::vector<DirEntry>> parse(int argc, char** argv);
 
 private:

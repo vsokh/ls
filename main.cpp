@@ -1,4 +1,5 @@
 #include "CommandLineArgsParser.h"
+#include "DirEntry.h"
 
 #include <iostream>
 #include <exception>

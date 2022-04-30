@@ -1,10 +1,12 @@
 #include "DirIterator.h"
+
+#include <utility>
 #include "DirEntry.h"
 
 namespace ls {
 
-DirIterator::DirIterator(const std::string& dirname)
-    : _dirname{dirname}
+DirIterator::DirIterator(std::string dirname)
+    : _dirname{std::move(dirname)}
     , _dirp{opendir(_dirname.c_str())}
 {}
 
@@ -14,9 +16,9 @@ DirIterator::~DirIterator() {
     }
 }
 
-DirIterator::iter::iter(DIR* dirp, const std::string& dirname)
+DirIterator::iter::iter(DIR* dirp, std::string dirname)
     : _dirp{dirp}
-    , _dirname{dirname}
+    , _dirname{std::move(dirname)}
     , _lastEntry{nextEntry()} {}
 
 DirIterator::iter DirIterator::begin() { return iter{_dirp, _dirname}; }

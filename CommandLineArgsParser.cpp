@@ -1,59 +1,73 @@
 #include "CommandLineArgsParser.h"
+#include "DirEntry.h"
+
+#include <utility>
+
+namespace {
+
+bool startsWith(std::string_view str1, std::string_view str2) {
+    return str1.compare(0, str2.size(), str2, 0, str2.size()) == 0;
+}
+
+std::string remove(std::string_view str, std::size_t count) {
+    return {str.begin() + count, str.end()};
+}
+
+bool contains(const ls::Options& possibleOptions, std::string_view opt) {
+    return std::find(possibleOptions.begin(),
+                     possibleOptions.end(), opt) != possibleOptions.end();
+}
+
+std::vector<std::string> split(std::string str, std::string_view delimiter)
+{
+    std::vector<std::string> result;
+    auto pos = str.find(delimiter);
+    while (pos != std::string::npos) {
+        auto end = str.begin() + pos;
+
+        result.emplace_back(str.begin(), end);
+        str.erase(end + 1);
+
+        pos = str.find(delimiter);
+    }
+    if (!str.empty()) {
+        auto end = str.begin() + pos;
+        result.emplace_back(str.begin(), end);
+    }
+    return result;
+}
+}
 
 namespace ls {
 
-OptionsParser::OptionsParser(const Options& possibleOptions)
-    : _possibleOptions{possibleOptions}
-{}
+OptionsParser::OptionsParser(Options possibleOptions)
+        : _possibleOptions{std::move(possibleOptions)} {}
 
-std::optional<Options> OptionsParser::parse(const std::string& opt)
-{
-    if (!startsWithDash(opt)) {
+std::optional<Options> OptionsParser::parse(std::string_view opt) {
+    std::string dash = "-";
+    if (!startsWith(opt, dash)) {
         return std::nullopt;
     }
-    if (auto noDashOpt = removeDash(opt);
-             noDashOpt.size() == 1) {
-        if (contains(noDashOpt)) {
+    if (auto noDashOpt = remove(opt, dash.size());
+            noDashOpt.size() == 1) {
+        if (contains(_possibleOptions, noDashOpt)) {
             return Options{noDashOpt};
         }
     } else {
-        return split(noDashOpt);
+        Options options;
+        auto opts = split(noDashOpt, "");
+        for (const auto& tokenOpt : opts)
+        {
+            if (contains(_possibleOptions, tokenOpt)) {
+                options.push_back(tokenOpt);
+            }
+        }
     }
     return std::nullopt;
 }
 
-bool OptionsParser::startsWithDash(const std::string& opt)
-{
-    return opt.compare(0, 1, "-", 0, 1) == 0;
-}
-
-std::string OptionsParser::removeDash(const std::string& opt)
-{
-    return {opt.begin()+1, opt.end()};
-}
-
-bool OptionsParser::contains(const std::string& opt)
-{
-    return std::find(_possibleOptions.begin(),
-                     _possibleOptions.end(), opt) != _possibleOptions.end();
-}
-
-Options OptionsParser::split(const std::string& opt)
-{
-    Options options;
-    std::for_each(opt.begin(), opt.end(),
-                  [this, &options](char ch)
-                  {
-                      std::string tmpOpt{ch};
-                      if (contains(tmpOpt)) {
-                          options.emplace_back(std::move(tmpOpt));
-                      }
-                  });
-    return options;
-}
-
-CommandLineArgsParser::CommandLineArgsParser(const OptionsParser& optionsParser)
-    : _optionsParser{optionsParser}
+CommandLineArgsParser::CommandLineArgsParser(OptionsParser optionsParser)
+    : _optionsParser{std::move(optionsParser)}
 {}
 
 std::tuple<Options, std::vector<DirEntry>>
@@ -67,7 +81,7 @@ CommandLineArgsParser::parse(int argc, char** argv)
         if (auto opts = _optionsParser.parse(arg)) {
             options.assign(opts.value().begin(), opts.value().end());
         } else {
-            entries.emplace_back(DirEntry{arg});
+            entries.emplace_back(arg);
         }
     }
     return {options, entries};
